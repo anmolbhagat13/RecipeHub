@@ -4,7 +4,12 @@ const bcrypt = require("bcryptjs");
 // Register a new user
 const registerUser = async (req, res) => {
   try {
-    const { fullname, username, email, password } = req.body;
+    let { fullname, username, email, password } = req.body;
+
+    // Normalize input
+    fullname = fullname?.trim();
+    username = username?.trim();
+    email = email?.trim().toLowerCase();
 
     // Check for empty fields
     if (!fullname || !username || !email || !password) {
@@ -13,12 +18,16 @@ const registerUser = async (req, res) => {
       });
     }
 
+    // Check password length
+    if (password.length < 6) {
+      return res.status(400).json({
+        message: "Password must be at least 6 characters",
+      });
+    }
+
     // Check if user already exists
     const existingUser = await User.findOne({
-      $or: [
-        { email: email.toLowerCase().trim() },
-        { username: username.trim() },
-      ],
+      $or: [{ email }, { username }],
     });
 
     if (existingUser) {
@@ -56,6 +65,13 @@ const registerUser = async (req, res) => {
     if (error.code === 11000) {
       return res.status(409).json({
         message: "Email or username already exists",
+      });
+    }
+
+    // Handle Mongoose validation errors
+    if (error.name === "ValidationError") {
+      return res.status(400).json({
+        message: error.message,
       });
     }
 
