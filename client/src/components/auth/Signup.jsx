@@ -15,6 +15,7 @@ const Signup = () => {
 
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [loading, setLoading] = useState(false)
 
   // Handle input changes
   const handleChange = (e) => {
@@ -24,11 +25,16 @@ const Signup = () => {
       ...formData,
       [name]: value
     })
+
+    setError('')
+    setSuccess('')
   }
 
   // Handle form submission
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
+
+    if (loading) return
 
     setError('')
     setSuccess('')
@@ -42,8 +48,13 @@ const Signup = () => {
     } = formData
 
     // Check for empty fields
-    if (!fullname.trim() || !username.trim() || !email.trim() ||
-        !password || !confirmPassword) {
+    if (
+      !fullname.trim() ||
+      !username.trim() ||
+      !email.trim() ||
+      !password ||
+      !confirmPassword
+    ) {
       setError('Please fill in all fields.')
       return
     }
@@ -60,7 +71,53 @@ const Signup = () => {
       return
     }
 
-    setSuccess('Form validation successful!')
+    // Send registration request
+    try {
+      setLoading(true)
+
+      const response = await fetch(
+        'http://localhost:5000/api/auth/register',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            fullname: fullname.trim(),
+            username: username.trim(),
+            email: email.trim(),
+            password
+          })
+        }
+      )
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        setError(data.message || 'Registration failed.')
+        return
+      }
+
+      setSuccess(data.message || 'Registration successful!')
+
+      // Reset form after successful registration
+      setFormData({
+        fullname: '',
+        username: '',
+        email: '',
+        password: '',
+        confirmPassword: ''
+      })
+
+      setShowPassword(false)
+      setShowConfirmPassword(false)
+
+    } catch (error) {
+      console.error('Registration error:', error)
+      setError('Unable to connect to the server. Please try again.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -92,6 +149,7 @@ const Signup = () => {
             value={formData.fullname}
             onChange={handleChange}
             placeholder="Enter your full name"
+            autoComplete="name"
             className="w-full border border-gray-300 rounded-lg px-4 py-3 outline-none focus:border-orange-500"
           />
         </div>
@@ -108,6 +166,7 @@ const Signup = () => {
             value={formData.username}
             onChange={handleChange}
             placeholder="Choose a username"
+            autoComplete="username"
             className="w-full border border-gray-300 rounded-lg px-4 py-3 outline-none focus:border-orange-500"
           />
         </div>
@@ -124,6 +183,7 @@ const Signup = () => {
             value={formData.email}
             onChange={handleChange}
             placeholder="Enter your email"
+            autoComplete="email"
             className="w-full border border-gray-300 rounded-lg px-4 py-3 outline-none focus:border-orange-500"
           />
         </div>
@@ -141,6 +201,7 @@ const Signup = () => {
               value={formData.password}
               onChange={handleChange}
               placeholder="Enter your password"
+              autoComplete="new-password"
               className="w-full border border-gray-300 rounded-lg px-4 py-3 pr-16 outline-none focus:border-orange-500"
             />
 
@@ -167,6 +228,7 @@ const Signup = () => {
               value={formData.confirmPassword}
               onChange={handleChange}
               placeholder="Confirm your password"
+              autoComplete="new-password"
               className="w-full border border-gray-300 rounded-lg px-4 py-3 pr-16 outline-none focus:border-orange-500"
             />
 
@@ -197,9 +259,10 @@ const Signup = () => {
         {/* Submit Button */}
         <button
           type="submit"
-          className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 rounded-lg transition"
+          disabled={loading}
+          className="w-full bg-orange-500 hover:bg-orange-600 disabled:opacity-60 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-lg transition"
         >
-          Create Account
+          {loading ? 'Creating Account...' : 'Create Account'}
         </button>
 
       </form>
