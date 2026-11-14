@@ -1,6 +1,58 @@
-import { Link } from 'react-router-dom'
+import { useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 
 const Login = () => {
+  const navigate = useNavigate()
+
+  // Store form data in state
+  const [formData, setFormData] = useState({
+    email: '',
+    password: ''
+  })
+
+  // Store error and loading state
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
+
+  // Handle input changes
+  const handleChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
+    })
+  }
+
+  // Handle form submission
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setError('')
+    setLoading(true)
+
+    try {
+      const response = await fetch('http://localhost:5000/api/auth/Login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify(formData)
+      })
+
+      const data = await response.json()
+      if(!response.ok) {
+        throw new Error(data.message || 'Login failed')
+      }
+
+      // Redirect after successful login
+      navigate('/')
+    } catch (error) {
+      setError(error.message || 'Unable to connect to the server.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+
   return (
     <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-8">
 
@@ -14,7 +66,7 @@ const Login = () => {
         </p>
       </div>
 
-      <form className="space-y-5">
+      <form onSubmit={handleSubmit} className="space-y-5">
 
         <div>
           <label className="block text-sm font-medium mb-2">
@@ -22,7 +74,11 @@ const Login = () => {
           </label>
           <input
             type="email"
+            name="email"
+            value={formData.email}
+            onChange={handleChange}
             placeholder="Enter your email"
+            required
             className="w-full border border-gray-300 rounded-lg px-4 py-3 outline-none focus:border-orange-500"
           />
         </div>
@@ -33,16 +89,25 @@ const Login = () => {
           </label>
           <input
             type="password"
+            name="password"
+            value={formData.password}
+            onChange={handleChange}
             placeholder="Enter your password"
+            required
             className="w-full border border-gray-300 rounded-lg px-4 py-3 outline-none focus:border-orange-500"
           />
         </div>
 
+        {error && (
+          <p className="text-red-500 text-sm"> {error} </p>
+        )}
+
         <button
           type="submit"
-          className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 rounded-lg transition"
+          disabled={loading}
+          className="w-full bg-orange-500 hover:bg-orange-600 disabled:opacity-60 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-lg transition"
         >
-          Login
+          {loading ? 'Logging in...' : 'Login'}
         </button>
 
       </form>
