@@ -5,6 +5,7 @@ require('dotenv').config()
 
 const connectDB = require('./config/db')
 const authRoutes = require('./routes/authRoutes')
+const recipeRoutes = require('./routes/recipeRoutes')
 
 const app = express()
 
@@ -19,6 +20,7 @@ app.use(cors({
 
 // API Routes
 app.use('/api/auth', authRoutes)
+app.use('/api/recipes', recipeRoutes)
 
 // Test route
 app.get('/', (req, res) => {
