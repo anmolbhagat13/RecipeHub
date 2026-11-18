@@ -30,12 +30,19 @@ const createRecipe = async (req, res) => {
     })
 
   } catch (error) {
+    if (error.name === 'ValidationError' || error.name === 'CastError') {
+      return res.status(400).json({
+        message: error.message
+      })
+    }
+
     res.status(500).json({
       message: 'Failed to create recipe',
       error: error.message
     })
   }
 }
+
 
 
 // 2. Get all recipes
