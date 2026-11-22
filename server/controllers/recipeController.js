@@ -44,27 +44,70 @@ const createRecipe = async (req, res) => {
 }
 
 
-
-// 2. Get all recipes
+// 2. Get all recipes with search, filtering, sorting and pagination
 const getAllRecipes = async (req, res) => {
   try {
-    const recipes = await Recipe.find()
-      .populate('createdBy', 'username fullname')
-      .sort({ createdAt: -1 })
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const limit = Math.min(50, Math.max(1, parseInt(req.query.limit) || 10));
+
+    const skip = (page - 1) * limit;
+
+    const { search, category, sort } = req.query;
+
+    // Build query
+    const query = {};
+
+    // Search by recipe title
+    if (search) {
+      query.title = {
+        $regex: search,
+        $options: 'i'
+      };
+    }
+
+    // Filter by category
+    if (category) {
+      query.category = category;
+    }
+
+    // Sorting options
+    const sortOptions = {
+      newest: { createdAt: -1 },
+      oldest: { createdAt: 1 },
+      alphabetical: { title: 1 },
+      cookingTime: { cookingTime: 1 }
+    };
+
+    const sortBy = sortOptions[sort] || sortOptions.newest;
+
+    const [recipes, totalRecipes] = await Promise.all([
+      Recipe.find(query)
+        .populate('createdBy', 'username fullname')
+        .sort(sortBy)
+        .skip(skip)
+        .limit(limit),
+
+      Recipe.countDocuments(query)
+    ]);
 
     res.status(200).json({
+      success: true,
+      page,
+      limit,
+      sort: sort || 'newest',
+      totalRecipes,
+      totalPages: Math.ceil(totalRecipes / limit),
       count: recipes.length,
       recipes
-    })
+    });
 
   } catch (error) {
     res.status(500).json({
       message: 'Failed to fetch recipes',
       error: error.message
-    })
+    });
   }
-}
-
+};
 
 // 3. Get a single recipe by ID
 const getRecipeById = async (req, res) => {
