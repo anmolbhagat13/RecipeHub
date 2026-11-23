@@ -6,6 +6,7 @@ require('dotenv').config()
 const connectDB = require('./config/db')
 const authRoutes = require('./routes/authRoutes')
 const recipeRoutes = require('./routes/recipeRoutes')
+const errorMiddleware = require('./middleware/errorMiddleware')
 
 const app = express()
 
@@ -26,6 +27,9 @@ app.use('/api/recipes', recipeRoutes)
 app.get('/', (req, res) => {
   res.send('RecipeHub API is running!')
 })
+
+// Global error handler
+app.use(errorMiddleware)
 
 // Start server after database connection
 const PORT = process.env.PORT || 5000
