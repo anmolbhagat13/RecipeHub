@@ -1,8 +1,8 @@
+
 import { createContext, useContext, useState, useEffect } from "react";
+import { api } from "../utils/api";
 
 const AuthContext = createContext();
-
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -11,17 +11,7 @@ export const AuthProvider = ({ children }) => {
   // Check existing authentication session
   const checkAuth = async () => {
     try {
-      const response = await fetch(`${API_URL}/auth/me`, {
-        method: "GET",
-        credentials: "include",
-      });
-
-      if (!response.ok) {
-        setUser(null);
-        return;
-      }
-
-      const data = await response.json();
+      const data = await api("/auth/me");
       setUser(data.user);
     } catch (error) {
       console.error("Authentication check failed:", error.message);
@@ -36,20 +26,10 @@ export const AuthProvider = ({ children }) => {
     setLoading(true);
 
     try {
-      const response = await fetch(`${API_URL}/auth/login`, {
+      const data = await api("/auth/login", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
         body: JSON.stringify({ email, password }),
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Login failed");
-      }
 
       setUser(data.user);
       return data;
@@ -63,20 +43,10 @@ export const AuthProvider = ({ children }) => {
     setLoading(true);
 
     try {
-      const response = await fetch(`${API_URL}/auth/register`, {
+      const data = await api("/auth/register", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
         body: JSON.stringify(userData),
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Registration failed");
-      }
 
       return data;
     } finally {
@@ -87,9 +57,8 @@ export const AuthProvider = ({ children }) => {
   // Logout user
   const logout = async () => {
     try {
-      await fetch(`${API_URL}/auth/logout`, {
+      await api("/auth/logout", {
         method: "POST",
-        credentials: "include",
       });
     } finally {
       setUser(null);
