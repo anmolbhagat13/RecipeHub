@@ -1,3 +1,4 @@
+const mongoose = require('mongoose')
 const Recipe = require('../models/Recipe')
 
 // 1. Create a new recipe
@@ -93,8 +94,9 @@ const getRecipeById = async (req, res) => {
   try {
     const { id } = req.params
 
-    if (!Recipe.schema.path('_id').cast(id)) {
+    if (!mongoose.isValidObjectId(id)) {
       return res.status(400).json({
+        success: false,
         message: 'Invalid recipe ID'
       })
     }
@@ -104,28 +106,33 @@ const getRecipeById = async (req, res) => {
 
     if (!recipe) {
       return res.status(404).json({
+        success: false,
         message: 'Recipe not found'
       })
     }
 
-    res.status(200).json({ recipe })
+    res.status(200).json({
+      success: true,
+      recipe
+    })
 
   } catch (error) {
     res.status(500).json({
+      success: false,
       message: 'Failed to fetch recipe',
       error: error.message
     })
   }
 }
 
-
 // 4. Update a recipe
 const updateRecipe = async (req, res) => {
   try {
     const { id } = req.params
 
-    if (!Recipe.schema.path('_id').cast(id)) {
+    if (!mongoose.isValidObjectId(id)) {
       return res.status(400).json({
+        success: false,
         message: 'Invalid recipe ID'
       })
     }
@@ -159,31 +166,34 @@ const updateRecipe = async (req, res) => {
 
     if (!updatedRecipe) {
       return res.status(404).json({
+        success: false,
         message: 'Recipe not found or you are not authorized to update it'
       })
     }
 
     res.status(200).json({
+      success: true,
       message: 'Recipe updated successfully!',
       recipe: updatedRecipe
     })
 
   } catch (error) {
     res.status(500).json({
+      success: false,
       message: 'Failed to update recipe',
       error: error.message
     })
   }
 }
 
-
 // 5. Delete a recipe
 const deleteRecipe = async (req, res) => {
   try {
     const { id } = req.params
 
-    if (!Recipe.schema.path('_id').cast(id)) {
+    if (!mongoose.isValidObjectId(id)) {
       return res.status(400).json({
+        success: false,
         message: 'Invalid recipe ID'
       })
     }
@@ -195,22 +205,24 @@ const deleteRecipe = async (req, res) => {
 
     if (!deletedRecipe) {
       return res.status(404).json({
+        success: false,
         message: 'Recipe not found or you are not authorized to delete it'
       })
     }
 
     res.status(200).json({
+      success: true,
       message: 'Recipe deleted successfully!'
     })
 
   } catch (error) {
     res.status(500).json({
+      success: false,
       message: 'Failed to delete recipe',
       error: error.message
     })
   }
 }
-
 
 module.exports = {
   createRecipe,
